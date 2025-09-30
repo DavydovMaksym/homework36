@@ -1,0 +1,233 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+class Directory
+{
+private:
+    std::string m_companyName;
+    std::string m_owner;
+    std::string m_phone;
+    std::string m_address;
+    std::string m_activity;
+
+public:
+    Directory() = default;
+    Directory(const std::string& company, const std::string& owner,
+        const std::string& phone, const std::string& address,
+        const std::string& activity)
+        : m_companyName(company), m_owner(owner),
+        m_phone(phone), m_address(address), m_activity(activity) {}
+
+    std::string getCompany() const
+    {
+        return m_companyName;
+    }
+    std::string getOwner() const
+    {
+        return m_owner;
+    }
+    std::string getPhone() const
+    {
+        return m_phone;
+    }
+    std::string getActivity() const
+    {
+        return m_activity;
+    }
+
+    void print() const
+    {
+        std::cout << "Company: " << m_companyName << "\n"
+            << "Owner: " << m_owner << "\n"
+            << "Phone: " << m_phone << "\n"
+            << "Address: " << m_address << "\n"
+            << "Activity: " << m_activity << "\n"
+            << "-------------------------\n";
+    }
+
+    void saveToFile(std::ofstream& out) const
+    {
+        out << m_companyName << '\n'
+            << m_owner << '\n'
+            << m_phone << '\n'
+            << m_address << '\n'
+            << m_activity << '\n';
+    }
+
+    static Directory loadFromFile(std::ifstream& in)
+    {
+        std::string company, owner, phone, address, activity;
+        std::getline(in, company);
+        std::getline(in, owner);
+        std::getline(in, phone);
+        std::getline(in, address);
+        std::getline(in, activity);
+        return Directory(company, owner, phone, address, activity);
+    }
+};
+
+int loadAll(const std::string& filename, Directory*& records)
+{
+    std::ifstream in(filename);
+    if (!in)
+    {
+        return 0;
+    }
+
+    int count = 0;
+    std::string line;
+    while (std::getline(in, line))
+    {
+        if (!line.empty())
+        {
+            count++;
+        }
+    }
+    in.close();
+
+    count /= 5;
+    records = new Directory[count];
+
+    in.open(filename);
+    for (int i = 0; i < count; i++)
+    {
+        records[i] = Directory::loadFromFile(in);
+    }
+    return count;
+}
+
+void saveAll(const std::string& filename, Directory* records, int count)
+{
+    std::ofstream out(filename, std::ios::trunc);
+    for (int i = 0; i < count; i++)
+    {
+        records[i].saveToFile(out);
+    }
+}
+
+void searchByCompany(Directory* records, int count, const std::string& name)
+{
+    for (int i = 0; i < count; i++)
+    {
+        if (records[i].getCompany() == name)
+        {
+            records[i].print();
+        }
+    }
+}
+
+void searchByOwner(Directory* records, int count, const std::string& owner) {
+    for (int i = 0; i < count; i++)
+    {
+        if (records[i].getOwner() == owner)
+        {
+            records[i].print();
+        }
+    }
+}
+
+void searchByPhone(Directory* records, int count, const std::string& phone) {
+    for (int i = 0; i < count; i++)
+    {
+        if (records[i].getPhone() == phone)
+        {
+            records[i].print();
+        }
+    }
+}
+
+void searchByActivity(Directory* records, int count, const std::string& activity) {
+    for (int i = 0; i < count; i++)
+    {
+        if (records[i].getActivity() == activity)
+        {
+            records[i].print();
+        }
+    }
+}
+
+int main()
+{
+    const std::string filename = "directory.txt";
+    Directory* records = nullptr;
+    int count = loadAll(filename, records);
+
+    int choice;
+    do
+    {
+        std::cout << "\nMenu:\n"
+            << "1. Add new record\n"
+            << "2. Show all records\n"
+            << "3. Search by company\n"
+            << "4. Search by owner\n"
+            << "5. Search by phone\n"
+            << "6. Search by activity\n"
+            << "0. Exit\n"
+            << "Choice: ";
+        std::cin >> choice;
+        std::cin.ignore();
+
+        if (choice == 1)
+        {
+            std::string company, owner, phone, address, activity;
+            std::cout << "Company: "; std::getline(std::cin, company);
+            std::cout << "Owner: ";   std::getline(std::cin, owner);
+            std::cout << "Phone: ";   std::getline(std::cin, phone);
+            std::cout << "Address: "; std::getline(std::cin, address);
+            std::cout << "Activity: "; std::getline(std::cin, activity);
+
+            Directory* newRecords = new Directory[count + 1];
+            for (int i = 0; i < count; i++)
+            {
+                newRecords[i] = records[i];
+            }
+            newRecords[count] = Directory(company, owner, phone, address, activity); // я не знаю как убрать эту полуошибку( и ту снизу тоже
+
+            delete[] records;
+            records = newRecords;
+            count++;
+
+            saveAll(filename, records, count);
+        }
+        else if (choice == 2)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                records[i].print();
+            }
+        }
+        else if (choice == 3)
+        {
+            std::string company;
+            std::cout << "Enter company: ";
+            std::getline(std::cin, company);
+            searchByCompany(records, count, company);
+        }
+        else if (choice == 4)
+        {
+            std::string owner;
+            std::cout << "Enter owner: ";
+            std::getline(std::cin, owner);
+            searchByOwner(records, count, owner);
+        }
+        else if (choice == 5)
+        {
+            std::string phone;
+            std::cout << "Enter phone: ";
+            std::getline(std::cin, phone);
+            searchByPhone(records, count, phone);
+        }
+        else if (choice == 6)
+        {
+            std::string activity;
+            std::cout << "Enter activity: ";
+            std::getline(std::cin, activity);
+            searchByActivity(records, count, activity);
+        }
+
+    } while (choice != 0);
+
+    delete[] records;
+    return 0;
+}
